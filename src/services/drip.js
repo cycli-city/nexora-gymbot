@@ -85,7 +85,7 @@ const startDripScheduler = () => {
   // TEST MODE: fires every 2 minutes so you can see drip messages on your phone
   if (process.env.TEST_MODE === 'true') {
     console.log('[drip-test] TEST MODE ON — sending test drip every 2 minutes');
-    cron.schedule('*/2 * * * *', runTestDrip);
+    cron.schedule('*/10 * * * *', runTestDrip);
   }
  
   console.log('[drip] scheduler started ✅');
