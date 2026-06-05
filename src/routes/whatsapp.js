@@ -14,7 +14,7 @@ async function whatsappRoutes(fastify) {
     // if (!valid) return reply.code(403).send('Forbidden');
 
     // Acknowledge immediately (Twilio needs a fast 200)
-    reply.code(200).send('OK');
+    reply.code(200).header('Content-Type', 'text/xml').send('<Response></Response>');
 
     try {
       const incoming = String(request.body.Body || '').trim();
