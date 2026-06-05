@@ -22,12 +22,14 @@ async function build() {
   });
 
   // Twilio sends form-urlencoded; register a parser for it
+  // Twilio sends form-urlencoded; register a parser for it
   fastify.addContentTypeParser(
     'application/x-www-form-urlencoded',
-    { parseAs: 'string' },
+    { parseAs: 'buffer' },
     (req, body, done) => {
       try {
-        done(null, Object.fromEntries(new URLSearchParams(body)));
+        const parsed = Object.fromEntries(new URLSearchParams(body.toString()));
+        done(null, parsed);
       } catch (err) {
         done(err);
       }
