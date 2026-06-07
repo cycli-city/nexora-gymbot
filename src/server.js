@@ -41,6 +41,7 @@ async function build() {
 
   await fastify.register(require('./routes/whatsapp'), { prefix: '/whatsapp' });
   await fastify.register(require('./routes/admin'), { prefix: '/admin' });
+  await fastify.register(require('./routes/voice'), { prefix: '/voice' });
 
   return fastify;
 }
