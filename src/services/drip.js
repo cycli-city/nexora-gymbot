@@ -131,7 +131,7 @@ const runDripCycle = async () => {
 // ═══════════════════════════════════════════════════════════
 const startDripScheduler = () => {
   // Production: daily at 10 AM
-  cron.schedule('0 10 * * *', runDripCycle);
+  cron.schedule('0 12 * * *', runDripCycle);
 
   // TEST_MODE: every X minutes (configurable via env)
   if (process.env.TEST_MODE === 'true') {
