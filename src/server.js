@@ -1,38 +1,39 @@
 const Fastify = require('fastify');
 const helmet = require('@fastify/helmet');
 const rateLimit = require('@fastify/rate-limit');
+const cors = require('@fastify/cors');
 const config = require('./config');
 const { startDripScheduler } = require('./services/drip');
 
 const fastify = Fastify({
   logger: true,
-  trustProxy: true, // correct client IPs behind Koyeb/Render proxy (needed for rate limit)
-  bodyLimit: 64 * 1024, // 64KB cap — reject oversized payloads
+  trustProxy: true,
+  bodyLimit: 64 * 1024,
 });
 
 async function build() {
-  // SECURITY: sets secure HTTP headers (XSS, clickjacking, MIME-sniffing protection)
   await fastify.register(helmet, { contentSecurityPolicy: false });
 
-  // SECURITY: global rate limit — blunts DDoS and brute-force on admin key
-  await fastify.register(rateLimit, {
-    max: 100, // requests
-    timeWindow: '1 minute',
-    ban: 3, // ban after repeatedly exceeding
+  // CORS — allows dashboard hosted on Netlify to call this API
+  await fastify.register(cors, {
+    origin: true, // reflects request origin; locks down via API key still
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['content-type', 'x-api-key'],
   });
 
-  // Twilio sends form-urlencoded; register a parser for it
-  // Twilio sends form-urlencoded; register a parser for it
+  await fastify.register(rateLimit, {
+    max: 100,
+    timeWindow: '1 minute',
+    ban: 3,
+  });
+
   fastify.addContentTypeParser(
     'application/x-www-form-urlencoded',
     { parseAs: 'buffer' },
     (req, body, done) => {
       try {
-        const parsed = Object.fromEntries(new URLSearchParams(body.toString()));
-        done(null, parsed);
-      } catch (err) {
-        done(err);
-      }
+        done(null, Object.fromEntries(new URLSearchParams(body.toString())));
+      } catch (err) { done(err); }
     }
   );
 
@@ -52,7 +53,4 @@ build()
       startDripScheduler();
     })
   )
-  .catch((err) => {
-    console.error(err);
-    process.exit(1);
-  });
+  .catch((err) => { console.error(err); process.exit(1); });

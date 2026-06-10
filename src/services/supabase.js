@@ -1,13 +1,11 @@
 const { createClient } = require('@supabase/supabase-js');
 const config = require('../config');
 
-// Supabase client uses parameterized queries under the hood — SQL injection safe.
-// We never build raw SQL strings anywhere in this codebase.
 const supabase = createClient(config.supabase.url, config.supabase.key, {
   auth: { persistSession: false },
 });
 
-const getOrCreateLead = async (phone) => {
+const getOrCreateLead = async (phone, name = null) => {
   const { data } = await supabase
     .from('gym_leads')
     .select('*')
@@ -18,7 +16,13 @@ const getOrCreateLead = async (phone) => {
 
   const { data: created, error } = await supabase
     .from('gym_leads')
-    .insert([{ phone, name: 'Friend', status: 'trial', drip_day: 0, conversation: [] }])
+    .insert([{
+      phone,
+      name: name || 'Friend',
+      status: 'trial',
+      drip_day: 0,
+      conversation: [],
+    }])
     .select()
     .single();
 
@@ -53,10 +57,69 @@ const updateDripDay = async (phone, day) => {
 const listLeads = async () => {
   const { data } = await supabase
     .from('gym_leads')
-    .select('phone, name, status, drip_day, joined_at, last_message_at')
+    .select('*')
     .order('joined_at', { ascending: false })
     .limit(500);
   return data || [];
+};
+
+// ═══ MEMBERSHIP FUNCTIONS ═══
+
+const addMember = async ({ phone, name, plan, membership_start, membership_end }) => {
+  // upsert — works whether the lead already exists or not
+  const { data, error } = await supabase
+    .from('gym_leads')
+    .upsert([{
+      phone,
+      name,
+      status: 'member',
+      plan,
+      membership_start,
+      membership_end,
+      drip_day: 0,
+      reminder_day: 0,
+      joined_at: new Date().toISOString(),
+    }], { onConflict: 'phone' })
+    .select()
+    .single();
+
+  if (error) console.error('addMember error:', error.message);
+  return data;
+};
+
+const addTrial = async ({ phone, name }) => {
+  const { data, error } = await supabase
+    .from('gym_leads')
+    .upsert([{
+      phone,
+      name,
+      status: 'trial',
+      drip_day: 0,
+      conversation: [],
+      joined_at: new Date().toISOString(),
+    }], { onConflict: 'phone' })
+    .select()
+    .single();
+
+  if (error) console.error('addTrial error:', error.message);
+  return data;
+};
+
+// Get all active members
+const getActiveMembers = async () => {
+  const { data } = await supabase
+    .from('gym_leads')
+    .select('*')
+    .eq('status', 'member');
+  return data || [];
+};
+
+const updateReminderDay = async (phone, day) => {
+  await supabase.from('gym_leads').update({ reminder_day: day }).eq('phone', phone);
+};
+
+const removeLead = async (phone) => {
+  await supabase.from('gym_leads').delete().eq('phone', phone);
 };
 
 module.exports = {
@@ -67,4 +130,9 @@ module.exports = {
   getTrialLeads,
   updateDripDay,
   listLeads,
+  addMember,
+  addTrial,
+  getActiveMembers,
+  updateReminderDay,
+  removeLead,
 };

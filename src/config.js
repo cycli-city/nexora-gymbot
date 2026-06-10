@@ -1,6 +1,5 @@
 require('dotenv').config();
 
-// Fail fast if critical secrets are missing — prevents running insecure/broken
 const REQUIRED = [
   'TWILIO_ACCOUNT_SID',
   'TWILIO_AUTH_TOKEN',
@@ -17,9 +16,8 @@ if (missing.length) {
   process.exit(1);
 }
 
-// Reject weak admin keys — basic guardrail
 if (process.env.ADMIN_API_KEY.length < 24) {
-  console.error('FATAL: ADMIN_API_KEY must be at least 24 characters. Generate a strong one.');
+  console.error('FATAL: ADMIN_API_KEY must be at least 24 characters.');
   process.exit(1);
 }
 
@@ -29,24 +27,22 @@ module.exports = {
     token: process.env.TWILIO_AUTH_TOKEN,
     whatsappNumber: process.env.TWILIO_WHATSAPP_NUMBER,
   },
-  groq: {
-    apiKey: process.env.GROQ_API_KEY,
-  },
+  groq: { apiKey: process.env.GROQ_API_KEY },
   supabase: {
     url: process.env.SUPABASE_URL,
     key: process.env.SUPABASE_KEY,
   },
   adminApiKey: process.env.ADMIN_API_KEY,
-  publicUrl: process.env.PUBLIC_URL || '', // used for Twilio signature validation
+  publicUrl: process.env.PUBLIC_URL || '',
   port: process.env.PORT || 3000,
   gym: {
-    name: process.env.GYM_NAME || 'FitZone Gym',
+    name: process.env.GYM_NAME || 'Muscle Factory',
     city: process.env.GYM_CITY || 'Amritsar',
     timings: process.env.GYM_TIMINGS || '5:00 AM - 10:00 PM',
-    address: process.env.GYM_ADDRESS || 'Near Bus Stand, Amritsar',
-    plans: process.env.GYM_PLANS || 'Monthly ₹1500 | Quarterly ₹3999 | Annual ₹12999',
-    facilities: process.env.GYM_FACILITIES || 'AC gym, cardio, free weights, steam, personal trainer',
+    address: process.env.GYM_ADDRESS || 'Fatehgarh Churian Road, Opposite Vrindavan Garden, Amritsar 143001',
+    plans: process.env.GYM_PLANS || 'Monthly ₹3000 | Quarterly ₹8000 | Annual ₹18000',
+    facilities: process.env.GYM_FACILITIES || 'AC gym, cardio machines, free weights, steam room, personal trainer available',
     upi: process.env.GYM_UPI || 'gymowner@upi',
-    ownerPhone: process.env.GYM_OWNER_PHONE || '',
+    ownerPhone: process.env.GYM_OWNER_PHONE || '+919876543210',
   },
 };
